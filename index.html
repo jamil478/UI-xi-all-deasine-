@@ -3,122 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        :root {
-            --bg: #f0f2f5;
-            --accent: #007aff; /* Apple Blue */
-            --glass: rgba(255, 255, 255, 0.7);
-        }
+        :root { --accent: #ff3e00; --bg: #0a0a0a; }
+        body { margin: 0; background: var(--bg); overflow: hidden; font-family: 'Poppins', sans-serif; }
 
-        body {
-            margin: 0; background: var(--bg);
+        canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+
+        .ui-content {
+            position: relative; z-index: 10;
             height: 100vh; display: flex;
             justify-content: center; align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica;
-            overflow: hidden;
+            pointer-events: none;
         }
 
-        /* ৩ডি কন্টেইনার */
-        .carousel-container {
-            width: 100%;
-            perspective: 1500px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .carousel {
-            display: flex;
-            gap: 50px;
+        .floating-card {
+            width: 400px; padding: 60px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            text-align: center; color: white;
+            pointer-events: auto;
             transform-style: preserve-3d;
-            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        /* গ্লাস কার্ড ডিজাইন */
-        .glass-card {
-            width: 300px; height: 400px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            padding: 30px; text-align: center;
-            transition: all 0.5s;
-            cursor: pointer;
-        }
-
-        /* মাউস সরালে কার্ড রিঅ্যাক্ট করবে */
-        .glass-card:hover {
-            transform: translateZ(50px) scale(1.05);
-            box-shadow: 0 40px 80px rgba(0,0,0,0.1);
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .icon-box {
-            width: 80px; height: 80px;
-            background: var(--accent);
-            border-radius: 20px;
-            margin-bottom: 25px;
-            display: flex; justify-content: center; align-items: center;
-            color: #fff; font-size: 30px;
-            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
-        }
-
-        h2 { margin: 0; color: #1d1d1f; font-size: 24px; }
-        p { color: #86868b; font-size: 14px; margin-top: 15px; line-height: 1.5; }
-
-        .btn {
-            margin-top: 30px;
-            padding: 10px 25px;
-            background: #1d1d1f; color: #fff;
-            border-radius: 50px; text-decoration: none;
-            font-size: 14px; font-weight: 500;
+        h1 { font-size: 42px; font-weight: 200; letter-spacing: 10px; margin: 0; }
+        p { font-size: 12px; opacity: 0.5; text-transform: uppercase; margin-top: 20px; }
+        
+        /* কাস্টম লিকুইড কার্সার */
+        .cursor-follower {
+            position: fixed; width: 40px; height: 40px;
+            border: 1px solid var(--accent); border-radius: 50%;
+            pointer-events: none; z-index: 100;
         }
     </style>
 </head>
 <body>
 
-    <div class="carousel-container">
-        <div class="carousel" id="carousel">
-            <div class="glass-card">
-                <div class="icon-box">📱</div>
-                <h2>iOS Vision</h2>
-                <p>Clean, minimal, and intuitive mobile interfaces.</p>
-                <a href="#" class="btn">Explore</a>
-            </div>
+    <div class="cursor-follower" id="follower"></div>
+    <canvas id="flowField"></canvas>
 
-            <div class="glass-card" style="transform: translateZ(100px);">
-                <div class="icon-box" style="background: #5856d6;">🎨</div>
-                <h2>UI Design</h2>
-                <p>Modern aesthetics meeting functional excellence.</p>
-                <a href="#" class="btn">View Case</a>
-            </div>
-
-            <div class="glass-card">
-                <div class="icon-box" style="background: #34c759;">⚡</div>
-                <h2>Performance</h2>
-                <p>Optimized systems built for speed and scale.</p>
-                <a href="#" class="btn">Check Stats</a>
-            </div>
+    <div class="ui-content">
+        <div class="floating-card" id="heroCard">
+            <h1>ALGO-ART</h1>
+            <p>Procedural Fluid Simulation</p>
         </div>
     </div>
 
     <script>
-        const carousel = document.getElementById('carousel');
-        let currentPos = 0;
+        const canvas = document.getElementById('flowField');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        // মাউস হুইল দিয়ে কার্ড স্লাইড করা
-        window.addEventListener('wheel', (e) => {
-            if (e.deltaY > 0) currentPos -= 50;
-            else currentPos += 50;
-            
-            // লিমিট সেট করা যাতে বেশি দূরে না যায়
-            currentPos = Math.max(Math.min(currentPos, 200), -200);
-            carousel.style.transform = `translateX(${currentPos}px) rotateY(${currentPos / 10}deg)`;
+        // ১. জেনারেটিভ ফ্লো ফিল্ড লজিক
+        let particles = [];
+        const numberOfParticles = 1500;
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.history = [{x: this.x, y: this.y}];
+                this.maxLength = Math.floor(Math.random() * 10 + 5);
+                this.speedX = 0;
+                this.speedY = 0;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.history[0].x, this.history[0].y);
+                for (let i = 1; i < this.history.length; i++) {
+                    ctx.lineTo(this.history[i].x, this.history[i].y);
+                }
+                ctx.strokeStyle = 'rgba(255, 62, 0, 0.2)';
+                ctx.stroke();
+            }
+            update() {
+                let dx = mouseX - this.x;
+                let dy = mouseY - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                let force = Math.max(0, (200 - distance) / 200);
+
+                this.speedX += dx * force * 0.01;
+                this.speedY += dy * force * 0.01;
+
+                this.x += this.speedX + Math.sin(this.y * 0.01);
+                this.y += this.speedY + Math.cos(this.x * 0.01);
+
+                this.history.push({x: this.x, y: this.y});
+                if (this.history.length > this.maxLength) this.history.shift();
+
+                this.speedX *= 0.95;
+                this.speedY *= 0.95;
+
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < numberOfParticles; i++) particles.push(new Particle());
+        }
+
+        let mouseX = 0, mouseY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX; mouseY = e.clientY;
+            gsap.to('#follower', { x: e.clientX - 20, y: e.clientY - 20, duration: 0.8, ease: "expo.out" });
+        });
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        // ২. কার্ডের ৩ডি টিল্ট ইফেক্ট (GSAP)
+        const card = document.getElementById('heroCard');
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width/2;
+            const y = e.clientY - rect.top - rect.height/2;
+            gsap.to(card, {
+                rotateY: x * 0.1,
+                rotateX: -y * 0.1,
+                duration: 0.5
+            });
         });
     </script>
 </body>
 </html>
-

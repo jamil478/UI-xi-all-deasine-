@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --accent: #007aff; /* Apple Blue */
+            --glass: rgba(255, 255, 255, 0.7);
+        }
+
+        body {
+            margin: 0; background: var(--bg);
+            height: 100vh; display: flex;
+            justify-content: center; align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica;
+            overflow: hidden;
+        }
+
+        /* ৩ডি কন্টেইনার */
+        .carousel-container {
+            width: 100%;
+            perspective: 1500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel {
+            display: flex;
+            gap: 50px;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* গ্লাস কার্ড ডিজাইন */
+        .glass-card {
+            width: 300px; height: 400px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 30px; text-align: center;
+            transition: all 0.5s;
+            cursor: pointer;
+        }
+
+        /* মাউস সরালে কার্ড রিঅ্যাক্ট করবে */
+        .glass-card:hover {
+            transform: translateZ(50px) scale(1.05);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .icon-box {
+            width: 80px; height: 80px;
+            background: var(--accent);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex; justify-content: center; align-items: center;
+            color: #fff; font-size: 30px;
+            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
+        }
+
+        h2 { margin: 0; color: #1d1d1f; font-size: 24px; }
+        p { color: #86868b; font-size: 14px; margin-top: 15px; line-height: 1.5; }
+
+        .btn {
+            margin-top: 30px;
+            padding: 10px 25px;
+            background: #1d1d1f; color: #fff;
+            border-radius: 50px; text-decoration: none;
+            font-size: 14px; font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="carousel-container">
+        <div class="carousel" id="carousel">
+            <div class="glass-card">
+                <div class="icon-box">📱</div>
+                <h2>iOS Vision</h2>
+                <p>Clean, minimal, and intuitive mobile interfaces.</p>
+                <a href="#" class="btn">Explore</a>
+            </div>
+
+            <div class="glass-card" style="transform: translateZ(100px);">
+                <div class="icon-box" style="background: #5856d6;">🎨</div>
+                <h2>UI Design</h2>
+                <p>Modern aesthetics meeting functional excellence.</p>
+                <a href="#" class="btn">View Case</a>
+            </div>
+
+            <div class="glass-card">
+                <div class="icon-box" style="background: #34c759;">⚡</div>
+                <h2>Performance</h2>
+                <p>Optimized systems built for speed and scale.</p>
+                <a href="#" class="btn">Check Stats</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const carousel = document.getElementById('carousel');
+        let currentPos = 0;
+
+        // মাউস হুইল দিয়ে কার্ড স্লাইড করা
+        window.addEventListener('wheel', (e) => {
+            if (e.deltaY > 0) currentPos -= 50;
+            else currentPos += 50;
+            
+            // লিমিট সেট করা যাতে বেশি দূরে না যায়
+            currentPos = Math.max(Math.min(currentPos, 200), -200);
+            carousel.style.transform = `translateX(${currentPos}px) rotateY(${currentPos / 10}deg)`;
+        });
+    </script>
+</body>
+</html>
+
